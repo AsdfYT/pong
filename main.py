@@ -2,6 +2,8 @@ from random import randint
 
 from pygame import *
 
+import webbrowser
+
 
 # класс-родитель для спрайтов
 class GameSprite(sprite.Sprite):
@@ -41,6 +43,24 @@ class Player(GameSprite):
         if keys[K_DOWN] and self.rect.y < win_width - 250:
             self.rect.y += self.speed
 
+class Ball(GameSprite):
+    def __init__(self, player_image, player_x, player_y, player_speed, wight, height):
+        super(Ball, self).__init__(player_image, player_x, player_y, player_speed, wight, height)
+        self.speed_x = player_speed
+        self.speed_y = player_speed
+
+    def update(self):
+        ball.rect.y += self.speed_y
+        ball.rect.x += self.speed_x
+        if ball.rect.y < 0 or ball.rect.y >= win_height - 50:
+            self.speed_y *= -1
+            kick.play()
+
+        if sprite.collide_rect(ball, racket1) or sprite.collide_rect(ball, racket2):
+            self.speed_x *= -1
+            kick.play()
+
+
 
 # Игровая сцена:
 back = (200, 255, 255)  # цвет фона (background)
@@ -48,11 +68,20 @@ win_width = 600
 win_height = 500
 window = display.set_mode((win_width, win_height))
 
-
 # создания мяча и ракетки
 racket1 = Player('racket.png', 30, 200, 4, 50, 150)  # при созданни спрайта добавляется еще два параметра
 racket2 = Player('racket.png', 520, 200, 4, 50, 150)
-ball = GameSprite('tenis_ball.png', 200, 200, 4, 50, 50)
+ball = Ball('tenis_ball.png', 200, 200, 4, 50, 50)
+
+font.init()
+font1 = font.Font(None, 35)
+lose1 = font1.render('PLAYER 1 LOSE!', True, (180, 0, 0))
+lose2 = font1.render('PLAYER 2 LOSE!', True, (180, 0, 0))
+
+mixer.init()
+#mixer.nusic.load('')
+#mixer.music.play()
+kick = mixer.Sound('kick.ogg')
 
 # флаги отвечающие за состояние игры
 game = True
@@ -60,8 +89,7 @@ finish = False
 clock = time.Clock()
 FPS = 60
 
-speed_x = 2
-speed_y = 2
+
 
 while game:
     for e in event.get():
@@ -70,27 +98,27 @@ while game:
     if not finish:
         window.fill(back)
 
-        if ball.rect.y < 0 or ball.rect.y >= win_height - 50:
-            speed_y *= -1
-            
-        if sprite.collide_rect(ball, racket1) or sprite.collide_rect(ball, racket2):
-            speed_x *= -1
 
-        if ball.rect.x <= 0 or ball.rect.x >= win_width - 50:
+
+        if ball.rect.x < 0:
+            window.blit(lose1, (200, 200))
             finish = True
+            webbrowser.open_new('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+
+        if ball.rect.x > win_width - ball.rect.size[0]:
+            window.blit(lose2, (200, 200))
+            finish = True
+            webbrowser.open_new('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
 
 
-
-        ball.rect.x += speed_x
-        ball.rect.y += speed_y
 
         racket1.update_l()
         racket2.update_r()
+        ball.update()
 
         racket1.reset()
         racket2.reset()
         ball.reset()
-
 
     display.update()
     clock.tick(FPS)
